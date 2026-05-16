@@ -52,3 +52,61 @@ export const createEquipment = async (req: Request, res: Response): Promise<void
     res.status(500).json({ message: 'Error al registrar el equipo', error });
   }
 };
+
+// ── PUT /api/equipments/:id ───────────────────────────────────────
+// Actualiza un equipo existente.
+export const updateEquipment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { name, serialNumber, status, categoryId } = req.body;
+
+    const equipment = await Equipment.findByPk(id as string);
+
+    if (!equipment) {
+      res.status(404).json({ message: 'Equipo no encontrado' });
+      return;
+    }
+
+    // Actualizar campos
+    await equipment.update({
+      name: name || equipment.name,
+      serialNumber: serialNumber || equipment.serialNumber,
+      status: status || equipment.status,
+      categoryId: categoryId || equipment.categoryId,
+    });
+
+    res.status(200).json({
+      message: 'Equipo actualizado exitosamente',
+      equipment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar el equipo', error });
+  }
+};
+
+// ── DELETE /api/equipments/:id ────────────────────────────────────
+// Elimina un equipo. Solo si no está prestado.
+export const deleteEquipment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const equipment = await Equipment.findByPk(id as string);
+
+    if (!equipment) {
+      res.status(404).json({ message: 'Equipo no encontrado' });
+      return;
+    }
+
+    // Regla de negocio: No eliminar si está prestado
+    if (equipment.status === 'borrowed') {
+      res.status(400).json({ message: 'No se puede eliminar un equipo que está prestado' });
+      return;
+    }
+
+    await equipment.destroy();
+
+    res.status(200).json({ message: 'Equipo eliminado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar el equipo', error });
+  }
+};

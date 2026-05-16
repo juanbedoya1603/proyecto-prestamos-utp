@@ -18,13 +18,15 @@ const PERMISSIONS = [
   // Nuevos permisos para Préstamos
   { name: 'equipments:read', description: 'Ver inventario de equipos' },
   { name: 'equipments:create', description: 'Crear nuevos equipos' },
+  { name: 'equipments:update', description: 'Actualizar equipos' },
+  { name: 'equipments:delete', description: 'Eliminar equipos' },
   { name: 'loans:create', description: 'Solicitar un préstamo' },
   { name: 'loans:read', description: 'Ver historial de préstamos' },
 ];
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
-  superuser: ['users:create', 'users:read', 'users:update', 'users:delete', 'admins:create', 'equipments:read', 'equipments:create', 'loans:read', 'loans:create'],
-  admin:     ['users:read', 'equipments:read', 'equipments:create', 'loans:read'],
+  superuser: ['users:create', 'users:read', 'users:update', 'users:delete', 'admins:create', 'equipments:read', 'equipments:create', 'equipments:update', 'equipments:delete', 'loans:read', 'loans:create'],
+  admin:     ['users:read', 'equipments:read', 'equipments:create', 'equipments:update', 'equipments:delete', 'loans:read'],
   user:      ['equipments:read', 'loans:create', 'loans:read'],
 };
 
