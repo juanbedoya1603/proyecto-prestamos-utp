@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar Equipo' : 'Nuevo Equipo' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre del equipo</mat-label>
+      <input matInput formControlName="name" placeholder="Ej: Osciloscopio Tektronix">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Número de serie</mat-label>
+      <input matInput formControlName="serialNumber" placeholder="Ej: TEK-OSC-001">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Categoría</mat-label>
+      <mat-select formControlName="categoryId">
+        @for (cat of categories; track cat.id) {
+          <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (isEdit) {
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="status">
+          @for (s of statuses; track s.value) {
+            <mat-option [value]="s.value">{{ s.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button class="save-btn" (click)="onSubmit()" [disabled]="form.invalid">
+    {{ isEdit ? 'Guardar Cambios' : 'Crear Equipo' }}
+  </button>
+</mat-dialog-actions>

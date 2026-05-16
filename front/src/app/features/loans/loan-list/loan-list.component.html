@@ -1,0 +1,78 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Gestión de Préstamos</h1>
+      <p class="page-subtitle">Controla los préstamos y devoluciones de equipos</p>
+    </div>
+    <button mat-flat-button class="add-btn" (click)="openNewLoan()">
+      <mat-icon>add</mat-icon>
+      Nuevo Préstamo
+    </button>
+  </div>
+
+  <mat-card class="table-card">
+    @if (loans().length > 0) {
+      <table mat-table [dataSource]="loans()">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let loan">#{{ loan.id }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="equipment">
+          <th mat-header-cell *matHeaderCellDef>Equipo</th>
+          <td mat-cell *matCellDef="let loan">
+            <div class="cell-main">{{ loan.equipment?.name || 'N/A' }}</div>
+            <div class="cell-sub">{{ loan.equipment?.serialNumber }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let loan">
+            <div class="cell-main">{{ loan.user?.name || 'N/A' }}</div>
+            <div class="cell-sub">{{ loan.user?.email }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="loanDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha Préstamo</th>
+          <td mat-cell *matCellDef="let loan">{{ loan.loanDate | date:'dd/MM/yyyy' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="returnDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha Devolución</th>
+          <td mat-cell *matCellDef="let loan">{{ loan.returnDate | date:'dd/MM/yyyy' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let loan">
+            <span class="status-chip" [ngClass]="loan.status">{{ getStatusLabel(loan.status) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let loan">
+            @if (loan.status === 'active') {
+              <button mat-icon-button matTooltip="Devolver equipo" class="return-btn" (click)="returnLoan(loan)">
+                <mat-icon>assignment_return</mat-icon>
+              </button>
+            } @else {
+              <mat-icon class="done-icon">check_circle</mat-icon>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    } @else {
+      <div class="empty-state">
+        <mat-icon>assignment</mat-icon>
+        <p>No hay préstamos registrados</p>
+        <button mat-stroked-button (click)="openNewLoan()">Crear primer préstamo</button>
+      </div>
+    }
+  </mat-card>
+</div>

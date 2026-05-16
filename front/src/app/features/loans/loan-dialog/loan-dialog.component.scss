@@ -1,0 +1,25 @@
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 380px;
+  padding-top: 8px;
+}
+
+h2[mat-dialog-title] {
+  color: var(--text-primary) !important;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.save-btn {
+  background: var(--gradient-primary) !important;
+  color: white !important;
+  font-weight: 600;
+  border-radius: var(--radius-sm) !important;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--border-color);
+}

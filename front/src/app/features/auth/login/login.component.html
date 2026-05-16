@@ -1,0 +1,61 @@
+<div class="login-page">
+  <div class="login-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-icon">
+          <mat-icon>school</mat-icon>
+        </div>
+        <h1>Préstamos UTP</h1>
+        <p>Sistema de Gestión de Equipos</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Correo electrónico</mat-label>
+          <mat-icon matPrefix>email</mat-icon>
+          <input matInput formControlName="email" type="email" placeholder="admin@utp.edu.co">
+          @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
+            <mat-error>El correo es obligatorio</mat-error>
+          }
+          @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+            <mat-error>Ingresa un correo válido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contraseña</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input matInput formControlName="password" [type]="hidePassword() ? 'password' : 'text'" placeholder="••••••••">
+          <button mat-icon-button matSuffix type="button" (click)="togglePassword()">
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+            <mat-error>La contraseña es obligatoria</mat-error>
+          }
+        </mat-form-field>
+
+        @if (isLoading()) {
+          <button mat-flat-button class="login-btn" type="button" disabled>
+            <mat-spinner diameter="22"></mat-spinner>
+            <span>Ingresando...</span>
+          </button>
+        } @else {
+          <button mat-flat-button class="login-btn" type="submit" [disabled]="loginForm.invalid">
+            <mat-icon>login</mat-icon>
+            <span>Iniciar Sesión</span>
+          </button>
+        }
+      </form>
+
+      <div class="login-footer">
+        <p>Universidad Tecnológica de Pereira</p>
+      </div>
+    </div>
+  </div>
+</div>

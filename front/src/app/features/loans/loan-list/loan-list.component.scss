@@ -1,0 +1,69 @@
+.add-btn {
+  background: var(--gradient-primary) !important;
+  color: white !important;
+  font-weight: 600;
+  border-radius: var(--radius-sm) !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+.table-card {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.cell-main {
+  font-weight: 500;
+}
+
+.cell-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.return-btn {
+  color: var(--accent-orange) !important;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--accent-green) !important;
+  }
+}
+
+.done-icon {
+  color: var(--accent-green);
+  font-size: 20px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: var(--text-muted);
+
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    font-size: 0.938rem;
+    margin-bottom: 16px;
+  }
+
+  button {
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
+  }
+}

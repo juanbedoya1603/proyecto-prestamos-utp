@@ -1,0 +1,228 @@
+$sidebar-width: 250px;
+$sidebar-collapsed: 72px;
+$topbar-height: 64px;
+$transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* ── Sidebar ─────────────────────────────── */
+.sidebar {
+  width: $sidebar-width;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: width $transition;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+
+  .collapsed & {
+    width: $sidebar-collapsed;
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  height: $topbar-height;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-glow);
+
+  mat-icon {
+    color: white;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.logo-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.toggle-btn {
+  color: var(--text-secondary) !important;
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+
+  .collapsed & {
+    display: none;
+  }
+}
+
+/* ── Navigation ──────────────────────────── */
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+  }
+
+  &:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    background: var(--accent-blue-glow);
+    color: var(--accent-blue-light);
+
+    mat-icon {
+      color: var(--accent-blue-light);
+    }
+  }
+}
+
+/* ── Sidebar Footer ──────────────────────── */
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.logout-btn {
+  color: var(--accent-red) !important;
+
+  &:hover {
+    background: var(--accent-red-bg) !important;
+  }
+}
+
+/* ── Main Area ───────────────────────────── */
+.main-area {
+  flex: 1;
+  margin-left: $sidebar-width;
+  transition: margin-left $transition;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  .collapsed & {
+    margin-left: $sidebar-collapsed;
+  }
+}
+
+/* ── Topbar ──────────────────────────────── */
+.topbar {
+  height: $topbar-height;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-color);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+  }
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-role {
+  font-size: 0.688rem;
+  color: var(--accent-blue);
+  text-transform: capitalize;
+}
+
+/* ── Content ─────────────────────────────── */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+}
