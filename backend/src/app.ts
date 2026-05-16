@@ -5,9 +5,10 @@ import cors from 'cors';
 import sequelize from './config/database';
 import { runSeed } from './seeders/initialData';
 import './models';
-//import authRoutes from './routes/authRoutes';
-//import userRoutes from './routes/userRoutes';
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
 import equipmentRoutes from './routes/equipmentRoutes';
+import loanRoutes from './routes/loanRoutes';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -19,9 +20,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors()); // Para permitir peticiones desde el frontend de Angular
 app.use(express.json()); // Para entender los body en formato JSON
 
-//app.use('/api/auth', authRoutes);
-//app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/equipments', equipmentRoutes);
+app.use('/api/loans', loanRoutes);
 
 // Endpoint de prueba (Health Check)
 app.get('/health', (req, res) => {

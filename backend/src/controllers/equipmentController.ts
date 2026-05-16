@@ -35,7 +35,7 @@ export const createEquipment = async (req: Request, res: Response): Promise<void
     }
 
     // Validación 3: La categoría debe existir (Código 404 - Not Found)
-    const category = await Category.findByPk(categoryId);
+    const category = await Category.findByPk(Number(categoryId));
     if (!category) {
       res.status(404).json({ message: 'La categoría especificada no existe' });
       return;
@@ -60,7 +60,7 @@ export const updateEquipment = async (req: Request, res: Response): Promise<void
     const { id } = req.params;
     const { name, serialNumber, status, categoryId } = req.body;
 
-    const equipment = await Equipment.findByPk(id as string);
+    const equipment = await Equipment.findByPk(Number(id));
 
     if (!equipment) {
       res.status(404).json({ message: 'Equipo no encontrado' });
@@ -90,7 +90,7 @@ export const deleteEquipment = async (req: Request, res: Response): Promise<void
   try {
     const { id } = req.params;
 
-    const equipment = await Equipment.findByPk(id as string);
+    const equipment = await Equipment.findByPk(Number(id));
 
     if (!equipment) {
       res.status(404).json({ message: 'Equipo no encontrado' });
