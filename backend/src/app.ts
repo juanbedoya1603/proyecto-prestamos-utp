@@ -3,6 +3,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import sequelize from './config/database';
+import { runSeed } from './seeders/initialData';
+import './models';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -22,9 +24,12 @@ app.get('/health', (req, res) => {
 // Función para iniciar el servidor y conectar a la BD
 const startServer = async () => {
   try {
-    // Verificamos la conexión a la base de datos
-    await sequelize.authenticate();
-    console.log('Base de datos conectada exitosamente.');
+    // Sincronizar modelos con la BD (crea las tablas si no existen)
+    await sequelize.sync({ alter: true });
+    console.log('Base de datos conectada y sincronizada.');
+    
+    // Correr los datos semilla
+    await runSeed();
     
     // Levantamos el servidor Express
     app.listen(PORT, () => {
