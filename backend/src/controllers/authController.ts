@@ -76,7 +76,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Generamos ambos tokens
-    const role = (user as any).role as Role;
+    const role = user.role as Role;
     const accessToken  = generateAccessToken(user.id, user.email, role.id, role.name);
     const refreshToken = generateRefreshToken(user.id);
 
@@ -129,7 +129,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const role = (user as any).role as Role;
+    const role = user.role as Role;
     const newAccessToken = generateAccessToken(user.id, user.email, role.id, role.name);
 
     res.status(200).json({ accessToken: newAccessToken });

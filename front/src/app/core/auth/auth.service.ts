@@ -10,6 +10,12 @@ export interface UserSession {
   role: string;
 }
 
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: UserSession;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -26,7 +32,7 @@ export class AuthService {
   }
 
   login(credentials: { email: string; password: string }) {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
       tap(response => {
         localStorage.setItem('token', response.accessToken);
         localStorage.setItem('refreshToken', response.refreshToken);

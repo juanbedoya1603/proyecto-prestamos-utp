@@ -11,9 +11,15 @@ import sequelize from '../config/database';
  * ─────────────────────────────────────────────────────────────────────
  */
 export const createLoan = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { equipmentId, returnDate } = req.body;
+
+  if (!equipmentId || !returnDate) {
+    res.status(400).json({ message: 'Equipo y fecha de devolución son requeridos' });
+    return;
+  }
+
   const t = await sequelize.transaction();
   try {
-    const { equipmentId, returnDate } = req.body;
     const userId = req.user!.id;
 
     // 1. Validar que el equipo exista y esté disponible
@@ -38,7 +44,7 @@ export const createLoan = async (req: AuthRequest, res: Response): Promise<void>
       returnDate,
       status: 'active',
       loanDate: new Date(),
-    } as any, { transaction: t });
+    }, { transaction: t });
 
     // 3. Actualizar el estado del equipo a 'borrowed'
     await equipment.update({ status: 'borrowed' }, { transaction: t });
@@ -108,16 +114,17 @@ export const returnLoan = async (req: AuthRequest, res: Response): Promise<void>
       message: 'Equipo devuelto exitosamente',
       loan,
     });
-  } catch (error: any) {
+  } catch (error) {
     await t.rollback();
     // 1. Imprimimos el error rojo gigante en la terminal para que lo veas tú
     console.error('🔥 ERROR CRÍTICO EN DEVOLUCIÓN:', error);
     
     // 2. Le mandamos el mensaje de error explícito a Postman
+    const err = error as Error;
     res.status(500).json({ 
       message: 'Error al procesar la devolución', 
-      error: error.message,
-      stack: error.stack // Opcional: te dirá exactamente la línea del código que falló
+      error: err.message,
+      stack: err.stack // Opcional: te dirá exactamente la línea del código que falló
     });
   }
 };

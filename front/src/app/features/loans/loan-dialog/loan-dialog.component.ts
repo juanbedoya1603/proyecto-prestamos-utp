@@ -39,6 +39,7 @@ export class LoanDialogComponent implements OnInit {
 
   availableEquipments = signal<Equipment[]>([]);
   minDate = new Date();
+  isLoading = signal(false);
 
   form = this.fb.group({
     equipmentId: [null as number | null, Validators.required],
@@ -62,12 +63,16 @@ export class LoanDialogComponent implements OnInit {
       returnDate: val.returnDate!.toISOString()
     };
 
+    this.isLoading.set(true);
+
     this.loanService.create(payload).subscribe({
       next: () => {
+        this.isLoading.set(false);
         this.snackBar.open('Préstamo creado exitosamente', 'OK', { duration: 3000 });
         this.dialogRef.close(true);
       },
       error: (err) => {
+        this.isLoading.set(false);
         this.snackBar.open(err.error?.message || 'Error al crear préstamo', 'Cerrar', { duration: 3000 });
       }
     });

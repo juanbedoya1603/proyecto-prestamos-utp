@@ -15,6 +15,11 @@ export interface Loan {
   createdAt?: string;
 }
 
+export interface LoanResponse {
+  message: string;
+  loan: Loan;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LoanService {
   private readonly http = inject(HttpClient);
@@ -28,11 +33,11 @@ export class LoanService {
     return this.http.get<Loan[]>(`${this.apiUrl}/my-loans`);
   }
 
-  create(data: { equipmentId: number; returnDate: string }): Observable<any> {
-    return this.http.post(this.apiUrl, data);
+  create(data: { equipmentId: number; returnDate: string }): Observable<LoanResponse> {
+    return this.http.post<LoanResponse>(this.apiUrl, data);
   }
 
-  returnLoan(id: number, observations?: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}/return`, { observations });
+  returnLoan(id: number, observations?: string): Observable<LoanResponse> {
+    return this.http.put<LoanResponse>(`${this.apiUrl}/${id}/return`, { observations });
   }
 }

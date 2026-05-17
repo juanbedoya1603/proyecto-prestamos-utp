@@ -9,6 +9,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import Role from './Role';
 
 // Interfaz con todas las columnas de la tabla
 interface UserAttributes {
@@ -33,6 +34,10 @@ class User
   public email!: string;
   public password!: string;
   public roleId!: number;
+  
+  // Relación con el modelo Role
+  public role?: Role;
+
   // readonly porque Sequelize los gestiona automáticamente
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;

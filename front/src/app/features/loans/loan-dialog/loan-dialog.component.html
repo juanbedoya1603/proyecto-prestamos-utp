@@ -24,8 +24,8 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
-  <button mat-flat-button class="save-btn" (click)="onSubmit()" [disabled]="form.invalid">
-    Crear Préstamo
+  <button mat-button (click)="onCancel()" [disabled]="isLoading()">Cancelar</button>
+  <button mat-flat-button class="save-btn" (click)="onSubmit()" [disabled]="form.invalid || isLoading()">
+    {{ isLoading() ? 'Procesando...' : 'Crear Préstamo' }}
   </button>
 </mat-dialog-actions>

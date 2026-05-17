@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,12 +21,13 @@ export class DashboardComponent implements OnInit {
   equipments = signal<Equipment[]>([]);
   loans = signal<Loan[]>([]);
 
-  totalEquipments = signal(0);
-  availableEquipments = signal(0);
-  borrowedEquipments = signal(0);
-  activeLoans = signal(0);
+  // Señales calculadas de forma reactiva
+  totalEquipments = computed(() => this.equipments().length);
+  availableEquipments = computed(() => this.equipments().filter(e => e.status === 'available').length);
+  borrowedEquipments = computed(() => this.equipments().filter(e => e.status === 'borrowed').length);
+  activeLoans = computed(() => this.loans().filter(l => l.status === 'active').length);
 
-  recentLoans = signal<Loan[]>([]);
+  recentLoans = computed(() => this.loans().slice(0, 5));
   displayedColumns = ['equipment', 'user', 'date', 'status'];
 
   ngOnInit() {
@@ -37,18 +38,14 @@ export class DashboardComponent implements OnInit {
     this.equipmentService.getAll().subscribe({
       next: (data) => {
         this.equipments.set(data);
-        this.totalEquipments.set(data.length);
-        this.availableEquipments.set(data.filter(e => e.status === 'available').length);
-        this.borrowedEquipments.set(data.filter(e => e.status === 'borrowed').length);
       }
     });
 
     this.loanService.getAll().subscribe({
       next: (data) => {
         this.loans.set(data);
-        this.activeLoans.set(data.filter(l => l.status === 'active').length);
-        this.recentLoans.set(data.slice(0, 5));
       }
     });
   }
 }
+

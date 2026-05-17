@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -27,17 +27,13 @@ import { AuthService, UserSession } from '../core/auth/auth.service';
 })
 export class LayoutComponent {
   authService = inject(AuthService);
-
-  get userName(): string {
-    return this.authService.currentUser()?.name || 'Admin';
-  }
-
-  get userRole(): string {
-    return this.authService.currentUser()?.role || 'superuser';
-  }
   private router = inject(Router);
 
   collapsed = signal(false);
+
+  userName = computed(() => this.authService.currentUser()?.name || 'Admin');
+  userRole = computed(() => this.authService.currentUser()?.role || 'superuser');
+
 
   navItems = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },

@@ -67,6 +67,30 @@ export const updateEquipment = async (req: Request, res: Response): Promise<void
       return;
     }
 
+    // Validación 1: Validar formato del estado si se envía
+    if (status && !['available', 'borrowed', 'maintenance'].includes(status)) {
+      res.status(400).json({ message: 'El estado del equipo debe ser available, borrowed o maintenance' });
+      return;
+    }
+
+    // Validación 2: Validar serial único
+    if (serialNumber && serialNumber !== equipment.serialNumber) {
+      const existing = await Equipment.findOne({ where: { serialNumber } });
+      if (existing) {
+        res.status(409).json({ message: 'Ya existe otro equipo con ese número de serie' });
+        return;
+      }
+    }
+
+    // Validación 3: Validar que la categoría exista
+    if (categoryId && categoryId !== equipment.categoryId) {
+      const category = await Category.findByPk(Number(categoryId));
+      if (!category) {
+        res.status(404).json({ message: 'La categoría especificada no existe' });
+        return;
+      }
+    }
+
     // Actualizar campos
     await equipment.update({
       name: name || equipment.name,

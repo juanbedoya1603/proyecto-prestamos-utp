@@ -211,3 +211,53 @@ html, body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+/* ── Fix para Inputs en Tema Oscuro ─────────── */
+
+/* 1. Color del texto que el usuario escribe */
+.mdc-text-field__input,
+.mat-mdc-select-value-text,
+.mat-date-range-input-inner {
+  color: var(--text-primary) !important;
+}
+
+/* 2. Color de los labels y placeholders */
+.mdc-floating-label,
+.mat-mdc-select-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+/* 3. Color del cursor titilante (caret) */
+.mdc-text-field {
+  caret-color: var(--accent-blue-light) !important;
+}
+
+/* ── Fix para los Selects y Calendarios ─────── */
+
+/* Fondo oscuro para menús desplegables y datepickers */
+.mat-mdc-select-panel,
+.mat-mdc-menu-panel,
+.mat-datepicker-content-container,
+.mat-datepicker-content {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Texto de las opciones (Categorías, Equipos a prestar) */
+.mat-mdc-option .mdc-list-item__primary-text {
+  color: var(--text-primary) !important;
+}
+
+/* Hover sobre las opciones del select */
+.mat-mdc-option:hover:not(.mdc-list-item--disabled) {
+  background-color: var(--bg-card-hover) !important;
+}
+
+/* Texto de los días y meses en el calendario de préstamos */
+.mat-calendar-body-cell-content,
+.mat-calendar-body-selected {
+  color: var(--text-primary) !important;
+}
+.mat-calendar-table-header th {
+  color: var(--text-secondary) !important;
+}

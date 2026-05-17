@@ -139,7 +139,7 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    const targetRoleName = (user as any).role?.name;
+    const targetRoleName = user.role?.name;
     const requesterRole = req.user!.roleName;
 
     // Admin solo puede editar usuarios con rol 'user' (no a otros admins ni al superuser)
@@ -212,7 +212,7 @@ export const deleteUser = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    const targetRoleName = (user as any).role?.name;
+    const targetRoleName = user.role?.name;
 
     // Superuser no puede ser eliminado por nadie
     if (targetRoleName === 'superuser') {

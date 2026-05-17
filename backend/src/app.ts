@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import equipmentRoutes from './routes/equipmentRoutes';
 import loanRoutes from './routes/loanRoutes';
+import categoryRoutes from './routes/categoryRoutes';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/equipments', equipmentRoutes);
 app.use('/api/loans', loanRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Endpoint de prueba (Health Check)
 app.get('/health', (req, res) => {

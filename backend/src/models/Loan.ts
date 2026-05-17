@@ -5,13 +5,13 @@ interface LoanAttributes {
   id: number;
   userId: number;      // FK
   equipmentId: number; // FK
-  loanDate: Date;
+  loanDate?: Date;
   returnDate: Date;
-  status: 'active' | 'returned' | 'overdue';
-  observations: string;
+  status?: 'active' | 'returned' | 'overdue';
+  observations?: string | null;
 }
 
-type LoanCreationAttributes = Optional<LoanAttributes, 'id'>;
+type LoanCreationAttributes = Optional<LoanAttributes, 'id' | 'loanDate' | 'status' | 'observations'>;
 
 class Loan extends Model<LoanAttributes, LoanCreationAttributes> implements LoanAttributes {
   public id!: number;
