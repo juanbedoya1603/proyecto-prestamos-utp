@@ -4,10 +4,12 @@
       <h1 class="page-title">Inventario de Equipos</h1>
       <p class="page-subtitle">Gestiona los equipos disponibles para préstamo</p>
     </div>
-    <button mat-flat-button class="add-btn" (click)="openDialog()">
-      <mat-icon>add</mat-icon>
-      Agregar Equipo
-    </button>
+    @if (isAdmin()) {
+      <button mat-flat-button class="add-btn" (click)="openDialog()">
+        <mat-icon>add</mat-icon>
+        Agregar Equipo
+      </button>
+    }
   </div>
 
   <mat-card class="table-card">
@@ -58,14 +60,16 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();"></tr>
       </table>
     } @else {
       <div class="empty-state">
         <mat-icon>inventory_2</mat-icon>
         <p>No hay equipos registrados</p>
-        <button mat-stroked-button (click)="openDialog()">Agregar primer equipo</button>
+        @if (isAdmin()) {
+          <button mat-stroked-button (click)="openDialog()">Agregar primer equipo</button>
+        }
       </div>
     }
   </mat-card>

@@ -20,6 +20,15 @@ export const createLoan = async (req: AuthRequest, res: Response): Promise<void>
     return;
   }
 
+  // Validar que la fecha de devolución no sea anterior a hoy
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const parsedReturn = new Date(returnDate);
+  if (isNaN(parsedReturn.getTime()) || parsedReturn < today) {
+    res.status(400).json({ message: 'La fecha de devolución debe ser una fecha futura' });
+    return;
+  }
+
   // Determinar a quién se le asigna el préstamo
   let targetUserId = requesterId;
   if (bodyUserId && Number(bodyUserId) !== requesterId) {

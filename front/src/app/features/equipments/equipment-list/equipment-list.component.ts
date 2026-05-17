@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
@@ -9,6 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EquipmentService, Equipment } from '../equipment.service';
 import { EquipmentDialogComponent } from '../equipment-dialog/equipment-dialog.component';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-equipment-list',
@@ -28,11 +29,24 @@ import { EquipmentDialogComponent } from '../equipment-dialog/equipment-dialog.c
 })
 export class EquipmentListComponent implements OnInit {
   private equipmentService = inject(EquipmentService);
+  private authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
   equipments = signal<Equipment[]>([]);
-  displayedColumns = ['id', 'name', 'serialNumber', 'category', 'status', 'actions'];
+
+  isAdmin = computed(() => {
+    const role = this.authService.currentUser()?.role;
+    return role === 'admin' || role === 'superuser';
+  });
+
+  displayedColumns = computed(() => {
+    const cols = ['id', 'name', 'serialNumber', 'category', 'status'];
+    if (this.isAdmin()) {
+      cols.push('actions');
+    }
+    return cols;
+  });
 
   ngOnInit() {
     this.loadEquipments();
