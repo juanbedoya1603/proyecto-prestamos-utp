@@ -33,7 +33,7 @@ export class LoanService {
     return this.http.get<Loan[]>(`${this.apiUrl}/my-loans`);
   }
 
-  create(data: { equipmentId: number; returnDate: string }): Observable<LoanResponse> {
+  create(data: { equipmentId: number; returnDate: string; userId?: number }): Observable<LoanResponse> {
     return this.http.post<LoanResponse>(this.apiUrl, data);
   }
 

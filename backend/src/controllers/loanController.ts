@@ -11,18 +11,27 @@ import sequelize from '../config/database';
  * ─────────────────────────────────────────────────────────────────────
  */
 export const createLoan = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { equipmentId, returnDate } = req.body;
+  const { equipmentId, returnDate, userId: bodyUserId } = req.body;
+  const requesterId = req.user!.id;
+  const roleName = req.user!.roleName;
 
   if (!equipmentId || !returnDate) {
     res.status(400).json({ message: 'Equipo y fecha de devolución son requeridos' });
     return;
   }
 
+  // Determinar a quién se le asigna el préstamo
+  let targetUserId = requesterId;
+  if (bodyUserId && Number(bodyUserId) !== requesterId) {
+    if (roleName !== 'admin' && roleName !== 'superuser') {
+      res.status(403).json({ message: 'No tienes permiso para asignar préstamos a otros usuarios' });
+      return;
+    }
+    targetUserId = Number(bodyUserId);
+  }
+
   const t = await sequelize.transaction();
   try {
-    const userId = req.user!.id;
-
-    // 1. Validar que el equipo exista y esté disponible
     const equipment = await Equipment.findByPk(Number(equipmentId), { transaction: t });
 
     if (!equipment) {
@@ -37,23 +46,18 @@ export const createLoan = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // 2. Crear el préstamo
     const newLoan = await Loan.create({
-      userId,
+      userId: targetUserId, // 🟢 Usamos el targetUserId calculado
       equipmentId: Number(equipmentId),
       returnDate,
       status: 'active',
       loanDate: new Date(),
     }, { transaction: t });
 
-    // 3. Actualizar el estado del equipo a 'borrowed'
     await equipment.update({ status: 'borrowed' }, { transaction: t });
 
     await t.commit();
-    res.status(201).json({
-      message: 'Préstamo registrado exitosamente',
-      loan: newLoan,
-    });
+    res.status(201).json({ message: 'Préstamo registrado exitosamente', loan: newLoan });
   } catch (error) {
     await t.rollback();
     res.status(500).json({ message: 'Error al registrar el préstamo', error });

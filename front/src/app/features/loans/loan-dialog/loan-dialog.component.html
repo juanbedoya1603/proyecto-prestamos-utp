@@ -2,6 +2,17 @@
 
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form">
+    @if (isAdmin()) {
+      <mat-form-field appearance="outline">
+        <mat-label>Prestar a (Usuario)</mat-label>
+        <mat-select formControlName="userId">
+          @for (user of users(); track user.id) {
+            <mat-option [value]="user.id">{{ user.name }} ({{ user.email }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
     <mat-form-field appearance="outline">
       <mat-label>Equipo</mat-label>
       <mat-select formControlName="equipmentId">

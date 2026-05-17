@@ -70,6 +70,17 @@ export const runSeed = async (): Promise<void> => {
     console.log(`Superusuario creado: ${superEmail}`);
   }
 
+  // Crear un usuario normal (estudiante)
+  const studentUser = await User.findOrCreate({
+        where: { email: 'estudiante@utp.edu.co' },
+        defaults: {
+          name: 'Carlos Estudiante',
+          email: 'estudiante@utp.edu.co',
+          password: await bcrypt.hash('Estudiante@1234', 10),
+          roleId: roleMap['user'].id,
+        },
+      }); 
+
 // 3. Crear Categorías de Prueba
   const catElectronica = await Category.findOrCreate({ 
     where: { name: 'Electrónica' }, 
