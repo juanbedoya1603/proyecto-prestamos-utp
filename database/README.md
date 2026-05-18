@@ -16,9 +16,9 @@ Nuestra infraestructura de datos está segmentada en dos entornos para garantiza
 El motor de datos ha sido migrado a un entorno completamente administrado y escalable en la nube de AWS:
 *   **Servicio**: **AWS RDS (Relational Database Service)** instanciando un motor MySQL 8.0 en la región de **us-east-1**.
 *   **Beneficios de Nube**: Copias de seguridad automatizadas en ventanas de mantenimiento periódicas, actualizaciones de parches del sistema operativo automáticos y monitorización en tiempo real con Amazon CloudWatch.
-*   **Seguridad y Aislamiento Perimetral**:
-    *   La base de datos RDS se encuentra desplegada en subredes privadas.
-    *   **AWS Security Group (SG)**: El grupo de seguridad de la instancia RDS cuenta con reglas de red entrantes estrictas (Inbound Rules) que **únicamente permiten tráfico por el puerto 3306 proveniente del Security Group específico del Backend (AWS EC2)**. Todo el tráfico entrante directo desde el internet público está completamente denegado.
+*   **Seguridad y Aislamiento Perimetral (Security Groups)**:
+    *   La base de datos RDS se encuentra desplegada en subredes privadas aisladas del internet público.
+    *   **AWS Security Group (SG)**: El grupo de seguridad de la instancia RDS cuenta con reglas de red entrantes estrictas (Inbound Rules) que **únicamente permiten tráfico por el puerto 3306 proveniente del Security Group específico del Backend (AWS EC2)**. Todo el tráfico entrante directo desde el internet público o IPS externas está denegado por defecto.
 
 ---
 
@@ -31,20 +31,22 @@ El motor de datos ha sido migrado a un entorno completamente administrado y esca
 
 ## 🔄 Estrategia de Migración e Inyección Inicial en AWS RDS
 
-El archivo `backup.sql` actuó como la pieza de datos fundamental para la inicialización y puesta en marcha del entorno de nube.
+El archivo `backup.sql` actúa como la pieza de datos fundamental para la inicialización y puesta en marcha del entorno de nube.
+
+> [!CAUTION]
+> **REGLA DE SEGURIDAD CRÍTICA**: Por políticas de seguridad de la infraestructura de TI, **jamás** se deben incluir credenciales reales, hosts de RDS, ni contraseñas reales en los archivos del repositorio de Git. En su lugar, se utilizan marcadores de posición (`placeholders`).
 
 ### 1. Generación del Dump de Datos (Desde Desarrollo Local)
 El archivo se exportó desde el contenedor local con el siguiente comando:
 ```bash
-docker exec -i mysql_prestamos mysqldump -u root -proot1234 prestamos_utp_db > database/backup.sql
+docker exec -i mysql_prestamos mysqldump -u root -p prestamos_utp_db > database/backup.sql
 ```
 
 ### 2. Inyección Inicial en AWS RDS (Seeding en Nube) ☁️
-Para poblar la base de datos de producción remota en AWS RDS por primera vez, se ejecutó una inyección remota canalizando el archivo `backup.sql` a través del cliente de MySQL, autenticándonos contra el endpoint DNS provisto por Amazon Web Services:
+Para poblar la base de datos de producción remota en AWS RDS por primera vez, se ejecuta una inyección remota canalizando el archivo `backup.sql` a través del cliente de MySQL, autenticándote contra el endpoint de Amazon Web Services:
 
 ```bash
-mysql -h rds-prestamos-utp-prod.crgyoaqhkkp8.us-east-1.rds.amazonaws.com -u admin -p prestamos_utp_db < database/backup.sql
+mysql -h TU_RDS_ENDPOINT.us-east-1.rds.amazonaws.com -u TU_USUARIO -p TU_BASE_DE_DATOS < database/backup.sql
 ```
 
-> [!NOTE]
-> Para ejecutar esta inyección remota, la máquina local temporal del administrador debió contar con acceso temporal a través del Security Group de RDS, o el script de inyección se ejecutó directamente desde una sesión de consola segura SSH dentro de la propia instancia de backend AWS EC2.
+*Nota: Para ejecutar la inyección, se recomienda ejecutar el comando localmente habilitando la IP temporalmente en el Security Group de RDS, o realizarlo directamente desde una sesión interactiva SSH dentro de la propia máquina virtual EC2 de backend (la cual posee acceso de red nativo por grupo de seguridad).*

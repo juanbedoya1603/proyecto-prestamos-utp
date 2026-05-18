@@ -8,7 +8,7 @@
 El sistema se compone de cuatro capas fundamentales desplegadas en la región `us-east-1` de AWS:
 1.  **Capa de Frontend (AWS S3 Static Website Hosting)**: La SPA de Angular 19 se compila de forma estática y se despliega en un bucket de **Amazon S3** optimizado para alojamiento web estático (con políticas de lectura GetObject y redirección interna a `index.html`).
 2.  **Capa de Red (AWS ALB)**: Un **Application Load Balancer (ALB)** "Internet-facing" que escucha por el puerto 80 (HTTP) y enruta de forma segura el tráfico hacia las instancias de cómputo del backend mediante Target Groups con chequeos de salud automatizados en `/health`.
-3.  **Capa de Backend (AWS EC2 + Docker)**: El servidor Node.js/TypeScript corre dentro de contenedores **Docker (Node 18 Alpine)** en una máquina virtual **AWS EC2 (Ubuntu 24.04)**. El puerto `3000` de la EC2 está completamente cerrado al público y solo acepta tráfico de entrada proveniente del grupo de seguridad del ALB.
+3.  **Capa de Backend (AWS EC2 + Docker)**: El servidor Node.js/TypeScript corre dentro de contenedores **Docker (Node 18 Alpine)** en una máquina virtual **AWS EC2 (Ubuntu)**. El puerto `3000` de la EC2 está completamente cerrado al público y solo acepta tráfico de entrada proveniente del grupo de seguridad del ALB.
 4.  **Capa de Datos (AWS RDS)**: Persistencia relacional confiable en **AWS RDS (MySQL 8.0)** desplegada en subredes privadas. Cuenta con un Security Group restrictivo que solo permite tráfico entrante por el puerto `3306` desde la instancia EC2.
 
 ### Diagrama de Flujo y Red en AWS (Mermaid)
@@ -36,7 +36,7 @@ graph TD
 *   **Backend**: Node.js, Express, TypeScript (Strict Mode), Sequelize v6, JSON Web Tokens (JWT), BcryptJS.
 *   **Base de Datos**: AWS RDS (MySQL 8.0 - Producción), MySQL 8.0 (Dockerizado - Desarrollo).
 *   **Infraestructura de Nube & DevOps**:
-    *   **AWS EC2 (Elastic Compute Cloud)**: Cómputo flexible en nube (Ubuntu 24.04).
+    *   **AWS EC2 (Elastic Compute Cloud)**: Cómputo flexible en nube.
     *   **AWS RDS (Relational Database Service)**: Alta disponibilidad y respaldos de base de datos relacional.
     *   **AWS ALB (Application Load Balancer)**: Balanceo inteligente de peticiones HTTPS.
     *   **Amazon S3 (Simple Storage Service)**: Alojamiento estático del frontend y almacenamiento manual de backups/assets.
@@ -54,6 +54,9 @@ Antes de iniciar de manera local, asegúrate de contar con:
 ---
 
 ## 🚀 Guías de Ejecución por Entornos
+
+> [!CAUTION]
+> **REGLA DE SEGURIDAD CRÍTICA**: Por políticas estrictas de seguridad de la infraestructura de TI, **bajo ninguna circunstancia** se permite la subida del archivo de configuración `.env` o credenciales reales de base de datos, firmas JWT ni endpoints DNS reales de AWS en el repositorio de Git. Sigue siempre las directrices de inyección mediante variables locales y usa variables de entorno genéricas.
 
 ---
 
@@ -79,8 +82,12 @@ docker-compose up -d
    cd backend
    npm install
    ```
-2. Configura tu `.env` local (`DB_HOST=127.0.0.1` o `localhost`).
-3. Corre el servidor en desarrollo local (esto creará las tablas y ejecutará el seed automáticamente):
+2. **Duplicar Plantilla de Entorno**: Crea tu archivo `.env` a partir de `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Edita el archivo `.env` configurando la dirección de tu base de datos local (`DB_HOST=127.0.0.1` o `localhost`) y agregando tus contraseñas locales y firmas JWT deseadas de prueba.
+4. Corre el servidor en desarrollo local (esto creará las tablas y ejecutará el seed automáticamente):
    ```bash
    npm run dev
    ```
@@ -104,26 +111,27 @@ docker-compose up -d
 Este es el flujo para compilar, dockerizar y desplegar actualizaciones directamente sobre la infraestructura real de producción en AWS:
 
 #### Paso 1: Empaquetar y Desplegar el Backend en AWS EC2
-1.  **Construir Imagen**: En la instancia EC2 o en el pipeline de CI/CD, construye la imagen a partir del `Dockerfile` (Node 18 Alpine):
+1.  **Variables de Entorno**: En tu máquina virtual EC2, crea el archivo `.env` de producción a partir de `.env.example`. Configura `DB_HOST` apuntando al endpoint de AWS RDS y provee contraseñas de red seguras.
+2.  **Construir Imagen**: Ejecuta el empaquetado a partir del `Dockerfile` (Node 18 Alpine):
     ```bash
     docker-compose build
     ```
-2.  **Iniciar API**: Levanta el contenedor orquestado del backend en la instancia EC2. Este correrá en el puerto `3000` internamente:
+3.  **Iniciar API**: Levanta el contenedor orquestado del backend en la instancia EC2. Este correrá en el puerto `3000` internamente, protegido por los Grupos de Seguridad de AWS:
     ```bash
     docker-compose up -d
     ```
-3.  **Chequeo de Salud**: El balanceador ALB monitorea la salud del contenedor consumiendo automáticamente el endpoint `/health` expuesto en el puerto `3000`.
+4.  **Chequeo de Salud**: El balanceador ALB monitorea la salud del contenedor consumiendo automáticamente el endpoint `/health` expuesto en el puerto `3000`.
 
 #### Paso 2: Compilar y Desplegar el Frontend en AWS S3
-1.  **Endpoint del ALB**: Verifica que las URLs de conexión en los servicios de Angular (`auth.service.ts`, `equipment.service.ts`, `loan.service.ts`, `user.service.ts`) apunten al balanceador público de carga de AWS:
-    `http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com`
+1.  **Endpoint del ALB**: Configura las URLs de conexión en los servicios de Angular (`auth.service.ts`, `equipment.service.ts`, `loan.service.ts`, `user.service.ts`) para apuntar al balanceador de carga público (ALB) provisto por AWS:
+    `http://TU-ALB-DNS-AWS.amazonaws.com`
 2.  **Compilar Angular**: Genera el bundle optimizado para producción en tu máquina local o servidor de compilación:
     ```bash
     npm run build
     ```
 3.  **Subir a S3**: Sube el contenido de la carpeta `/dist/front` al bucket de S3 utilizando la CLI de AWS:
     ```bash
-    aws s3 sync dist/front s3://s3-prestamos-utp-front-prod --delete
+    aws s3 sync dist/front s3://nombre-tu-bucket-front --delete
     ```
 4.  **Acceso Web**: El frontend estará disponible a nivel mundial a través del endpoint HTTP provisto por el Static Website Hosting del bucket de S3.
 
@@ -131,7 +139,7 @@ Este es el flujo para compilar, dockerizar y desplegar actualizaciones directame
 
 ## 🔑 Credenciales de Prueba (Seeded Data)
 
-El sistema de base de datos AWS RDS se encuentra precargado con los siguientes roles y usuarios para la evaluación:
+Durante el arranque inicial, la base de datos se precarga de forma automática con los siguientes roles y usuarios de prueba para facilitar la evaluación:
 
 | Rol | Correo Electrónico | Contraseña | Capacidades en el Sistema |
 | :--- | :--- | :--- | :--- |

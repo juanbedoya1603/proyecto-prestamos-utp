@@ -72,19 +72,19 @@ El formulario de préstamo de equipos implementa una validación doble:
 
 ## ☁️ Despliegue en Producción (AWS S3)
 
-Para el despliegue del Frontend en alta disponibilidad, hemos migrado el servidor local a la infraestructura de almacenamiento estático de Amazon Web Services:
+Para el despliegue del Frontend en alta disponibilidad, el cliente Angular se aloja de forma estática en la nube de Amazon Web Services:
 
 ### 1. Compilación de Producción
-Se ejecuta el empaquetado del bundle altamente optimizado para web:
+Se ejecuta el empaquetado del bundle optimizado para web:
 ```bash
 npm run build
 ```
 Esto genera los artefactos minificados HTML, JS compilado y estilos optimizados dentro del directorio `/dist/front`.
 
 ### 2. AWS S3 Static Website Hosting
-*   Los contenidos de `/dist/front` se cargaron a un bucket público de **Amazon S3** (`s3://s3-prestamos-utp-front-prod`).
-*   Se habilitó la opción **Static website hosting** configurando tanto el "Index document" como el "Error document" hacia `index.html`. Esto es crítico para soportar correctamente el enrutamiento del lado del cliente de Angular (HTML5 pushState) al refrescar el navegador.
-*   Se inyectó una **Bucket Policy** para permitir solicitudes de lectura pública:
+*   Los contenidos de `/dist/front` se cargan a tu bucket de **Amazon S3** dedicado para producción (`s3://nombre-tu-bucket-front`).
+*   Se habilita la opción **Static website hosting** configurando tanto el "Index document" como el "Error document" hacia `index.html`. Esto es crítico para soportar correctamente el enrutamiento del lado del cliente de Angular (HTML5 pushState) al refrescar el navegador.
+*   Se inyecta una **Bucket Policy** en S3 para permitir solicitudes de lectura pública:
     ```json
     {
       "Version": "2012-10-17",
@@ -94,17 +94,20 @@ Esto genera los artefactos minificados HTML, JS compilado y estilos optimizados 
           "Effect": "Allow",
           "Principal": "*",
           "Action": "s3:GetObject",
-          "Resource": "arn:aws:s3:::s3-prestamos-utp-front-prod/*"
+          "Resource": "arn:aws:s3:::nombre-tu-bucket-front/*"
         }
       ]
     }
     ```
 
 ### 3. Conexión de API al Application Load Balancer (ALB) 📡
-En el entorno de nube, las peticiones HTTP de los servicios Angular ya no apuntan a `localhost:3000`. Se configuraron dinámicamente en los archivos de servicio de Angular (`auth.service.ts`, `equipment.service.ts`, `loan.service.ts`, y `user.service.ts`) para apuntar al **DNS público de nuestro balanceador de carga de AWS**:
+En el entorno de nube, las peticiones HTTP de los servicios Angular ya no apuntan a `localhost:3000`. Se deben configurar en los archivos de servicio de Angular (`auth.service.ts`, `equipment.service.ts`, `loan.service.ts`, y `user.service.ts`) para apuntar al **DNS público de tu balanceador de carga (ALB) de AWS**:
 
 *   **Endpoint Base de API en Producción**:  
-    `http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com`
+    `http://TU-ALB-DNS-AWS.amazonaws.com`
+
+> [!WARNING]
+> **REGLA DE SEGURIDAD**: Nunca expongas endpoints DNS reales con IDs de cuentas, secretos de red ni URLs sensibles en el repositorio de Git. Utiliza siempre marcadores genéricos en la documentación pública.
 
 ---
 

@@ -25,36 +25,47 @@ backend/
 
 ---
 
-## ⚙️ Configuración de Variables de Env y Topología en Producción
+## ⚙️ Configuración Segura de Variables de Entorno
 
-El servidor depende estrictamente de configuraciones externas inyectadas mediante variables de entorno para evitar prácticas inseguras de hardcoding. Duplica el archivo `.env.example` y edita las siguientes llaves en tu `.env` local:
-
-```env
-# Puerto del Servidor Express
-PORT=3000
-
-# Parámetros de Conexión MySQL (AWS RDS en Producción)
-DB_HOST=rds-prestamos-utp-prod.crgyoaqhkkp8.us-east-1.rds.amazonaws.com
-DB_USER=admin
-DB_PASSWORD=root1234
-DB_NAME=prestamos_utp_db
-DB_PORT=3306
-
-# Firmas de Seguridad Criptográfica JWT
-JWT_ACCESS_SECRET=clave_secreta_super_segura_de_acceso_utp
-JWT_REFRESH_SECRET=clave_secreta_super_segura_de_actualizacion_utp
-```
+El servidor depende estrictamente de configuraciones externas inyectadas mediante variables de entorno para evitar prácticas inseguras de hardcoding de credenciales. 
 
 > [!IMPORTANT]
-> En el entorno de producción en AWS:
-> *   **`DB_HOST`**: Apunta al endpoint DNS maestro de la instancia de base de datos administrada en **AWS RDS** (`rds-prestamos-utp-prod.crgyoaqhkkp8.us-east-1.rds.amazonaws.com`) en lugar de `localhost`.
-> *   **Protección del Puerto 3000 (EC2)**: El Security Group de nuestra máquina virtual **AWS EC2 (Ubuntu 24.04)** mantiene el puerto `3000` bloqueado al público de internet. Solo se permite tráfico entrante si proviene explícitamente del **AWS Application Load Balancer (ALB)** de red. Esto evita ataques directos al servidor API y permite que todo pase de forma centralizada y segura por el balanceador.
+> **REGLA DE SEGURIDAD CRÍTICA**: Por directriz de seguridad del proyecto, el archivo `.env` está estrictamente ignorado en `.gitignore` y **nunca** debe ser subido al repositorio de Git. En su lugar, el repositorio provee el archivo [`.env.example`](file:///c:/Users/bedoy/OneDrive/Desktop/Programacion/Progra%20WEB/Proyecto%20Final%20Web/proyecto-prestamos-utp/backend/.env.example) con llaves vacías.
+
+### Instrucciones de Configuración Local y Producción:
+Cada desarrollador debe copiar el archivo `.env.example` y crear su propio archivo `.env` en la carpeta `backend/`:
+```bash
+cp .env.example .env
+```
+
+### Variables requeridas en el archivo `.env`:
+
+| Variable | Tipo | Propósito / Configuración |
+| :--- | :--- | :--- |
+| **`PORT`** | Numérico | Puerto de escucha local de la API (Ej: `3000`). |
+| **`DB_HOST`** | String | IP o Endpoint DNS del motor MySQL (En local: `127.0.0.1`. En producción: **Endpoint DNS de tu instancia AWS RDS**). |
+| **`DB_PORT`** | Numérico | Puerto de conexión a la base de datos (Por defecto `3306`). |
+| **`DB_USER`** | String | Usuario de base de datos (En local: `root`. En producción: usuario administrador creado en RDS). |
+| **`DB_PASSWORD`** | String | Contraseña de conexión. **Usa siempre contraseñas seguras y nunca vacías**. |
+| **`DB_NAME`** | String | Nombre del esquema SQL a conectar. |
+| **`JWT_ACCESS_SECRET`** | String | Firma criptográfica para los Access Tokens de sesión. |
+| **`JWT_REFRESH_SECRET`**| String | Firma criptográfica para la rotación de Refresh Tokens. |
 
 ---
 
-## 🐳 Dockerización y Orquestación en AWS EC2 (Producción)
+## 🔒 Capa de Seguridad y Red en AWS (Producción)
 
-Para garantizar un entorno idéntico e inmune a discrepancias entre sistemas operativos de desarrollo y servidores de nube, el backend fue dockerizado:
+En el entorno real de producción sobre AWS, el servidor implementa una topología de red protegida:
+
+1.  **Protección de Puerto 3000 (EC2)**: La instancia de cómputo **AWS EC2** que ejecuta la API mantiene el puerto `3000` cerrado al internet público. 
+2.  **Application Load Balancer (ALB)**: Todo el tráfico entrante pasa de forma obligatoria por un **AWS ALB** público (puerto 80 HTTP). El grupo de seguridad de la EC2 solo permite tráfico por el puerto `3000` si proviene directamente de la dirección interna del ALB.
+3.  **Seguridad Criptográfica**: Las contraseñas de usuarios están protegidas por hashes salteados con `bcryptjs` en 10 rondas. Los JWT gestionan tokens de acceso de corta duración (15 min) y tokens de refresco de larga duración (7 días) para garantizar sesiones fluidas pero seguras.
+
+---
+
+## 🐳 Dockerización y Orquestación en AWS EC2
+
+Para garantizar portabilidad idéntica entre entornos de desarrollo y nube, el backend fue dockerizado:
 
 ### 1. Receta del `Dockerfile` (Node 18 Alpine)
 El archivo empaqueta el servidor minimizando la huella del contenedor en disco y memoria:
@@ -70,7 +81,7 @@ CMD ["npm", "start"]
 ```
 
 ### 2. Orquestación en Nube via Docker Compose
-En la máquina virtual EC2, el despliegue y reinicios automáticos ante caídas se administran a través del servicio orquestado en `docker-compose.yml`:
+En la máquina virtual EC2, el contenedor y sus políticas de reinicio automático se controlan mediante `docker-compose.yml`:
 ```yaml
 services:
   api:
@@ -82,18 +93,6 @@ services:
       - ./backend/.env
     restart: always
 ```
-
----
-
-## 🔒 Capa de Seguridad y RBAC (Control de Acceso basado en Roles)
-
-El sistema de seguridad implementa:
-1.  **JWT Rotativo**:
-    *   **Access Token**: Tiempo de vida de 15 minutos. Contiene la firma y los datos de identidad básicos (`id`, `email`, `roleId`, `roleName`).
-    *   **Refresh Token**: Almacenado de forma segura en una tabla de base de datos (`refresh_tokens`) con expiración de 7 días. Permite al frontend obtener un nuevo access token de forma transparente sin forzar al usuario a loguearse constantemente.
-2.  **Encriptación Bcrypt**: Todas las contraseñas se almacenan mediante hashes criptográficos salteados con `bcryptjs` en 10 rondas. Jamás viajan hashes de retorno ni contraseñas planas en las respuestas JSON.
-3.  **Middleware RBAC**:
-    *   [authMiddleware.ts](file:///c:/Users/bedoy/OneDrive/Desktop/Programacion/Progra%20WEB/Proyecto%20Final%20Web/proyecto-prestamos-utp/backend/src/middlewares/authMiddleware.ts) intercepta los requests, extrae y descifra el JWT, y evalúa a nivel de base de datos si el rol del usuario posee los permisos requeridos para acceder a la ruta.
 
 ---
 
