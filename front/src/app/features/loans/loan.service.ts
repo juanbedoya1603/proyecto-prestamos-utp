@@ -23,7 +23,7 @@ export interface LoanResponse {
 @Injectable({ providedIn: 'root' })
 export class LoanService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/api/loans';
+  private readonly apiUrl = 'http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com/api/loans';
 
   getAll(): Observable<Loan[]> {
     return this.http.get<Loan[]>(this.apiUrl);

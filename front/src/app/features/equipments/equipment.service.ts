@@ -28,9 +28,9 @@ export interface EquipmentResponse {
 @Injectable({ providedIn: 'root' })
 export class EquipmentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/api/equipments';
-  // Añadir la URL de categorías
-  private readonly catUrl = 'http://localhost:3000/api/categories';
+
+  private readonly apiUrl = 'http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com/api/equipments';
+  private readonly catUrl = 'http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com/api/categories';
 
   getAll(): Observable<Equipment[]> {
     return this.http.get<Equipment[]>(this.apiUrl);

@@ -11,7 +11,7 @@ export interface User {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/api/users';
+  private readonly apiUrl = 'http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com/api/users';
 
   getAll(): Observable<User[]> {
     return this.http.get<User[]>(this.apiUrl);
