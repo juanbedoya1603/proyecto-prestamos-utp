@@ -1,29 +1,30 @@
 # 🏫 Sistema de Gestión de Préstamos de Equipos (UTP)
-¡Bienvenido al sistema **Fullstack de Préstamos de Equipos de la Universidad Tecnológica de Pereira (UTP)**! Este ecosistema está diseñado bajo un modelo de arquitectura de tres capas robusta, segura y reactiva, desarrollado con tecnologías modernas que garantizan un rendimiento óptimo y un cumplimiento estricto de las mejores prácticas de ingeniería de software.
+¡Bienvenido al sistema **Fullstack de Préstamos de Equipos de la Universidad Tecnológica de Pereira (UTP)**! El proyecto ha migrado exitosamente desde un entorno de simulación local a una **infraestructura en la nube de alta disponibilidad y tolerancia a fallos sobre Amazon Web Services (AWS)**, diseñada bajo un modelo de arquitectura de tres capas robusta, fuertemente tipada y escalable.
 
 ---
 
-## 🏛️ Arquitectura General del Ecosistema
+## 🏛️ Arquitectura de Producción en AWS
 
-El sistema se compone de tres piezas de software perfectamente integradas:
-1. **Frontend (Angular 19)**: Una SPA reactiva, modular, basada en componentes **Standalone** y APIs modernas como **Signals** y **Computed** que optimizan la renderización del DOM y eliminan sobrecargas.
-2. **Backend (Node.js + Express + TypeScript)**: Un servidor API REST modular bajo el estándar estricto de compilación de TypeScript, acoplado al ORM **Sequelize** y protegido por autenticación basada en roles (RBAC) y tokens **JWT**.
-3. **Database (MySQL 8.0)**: Un motor relacional estructurado, dockerizado localmente para el desarrollo y preparado para escalar a la nube a través de **AWS RDS**.
+El sistema se compone de cuatro capas fundamentales desplegadas en la región `us-east-1` de AWS:
+1.  **Capa de Frontend (AWS S3 Static Website Hosting)**: La SPA de Angular 19 se compila de forma estática y se despliega en un bucket de **Amazon S3** optimizado para alojamiento web estático (con políticas de lectura GetObject y redirección interna a `index.html`).
+2.  **Capa de Red (AWS ALB)**: Un **Application Load Balancer (ALB)** "Internet-facing" que escucha por el puerto 80 (HTTP) y enruta de forma segura el tráfico hacia las instancias de cómputo del backend mediante Target Groups con chequeos de salud automatizados en `/health`.
+3.  **Capa de Backend (AWS EC2 + Docker)**: El servidor Node.js/TypeScript corre dentro de contenedores **Docker (Node 18 Alpine)** en una máquina virtual **AWS EC2 (Ubuntu 24.04)**. El puerto `3000` de la EC2 está completamente cerrado al público y solo acepta tráfico de entrada proveniente del grupo de seguridad del ALB.
+4.  **Capa de Datos (AWS RDS)**: Persistencia relacional confiable en **AWS RDS (MySQL 8.0)** desplegada en subredes privadas. Cuenta con un Security Group restrictivo que solo permite tráfico entrante por el puerto `3306` desde la instancia EC2.
 
-### Diagrama de Flujo y Capas (Mermaid)
+### Diagrama de Flujo y Red en AWS (Mermaid)
 
 ```mermaid
 graph TD
-    Client[Cliente Angular 19] <-->|HTTPS / JSON + JWT| Proxy[API Gateway / Express Router]
+    Client[1. Frontend Angular 19 - AWS S3 Bucket] <-->|HTTP / puerto 80| ALB[2. AWS Application Load Balancer - ALB]
+    ALB <-->|Enrutamiento Target Group / puerto 3000| EC2[3. AWS EC2 Instance - Docker Container API]
     
-    subgraph Backend [Backend NodeJS / TS]
-        Proxy <--> Auth[Auth & AuthMiddlewares - RBAC]
-        Auth <--> Controllers[Controladores de Negocio]
-        Controllers <--> Models[Modelos Sequelize]
-    end
-
-    subgraph Database_Layer [Capa de Datos]
-        Models <-->|MySQL Dialect| MySQL[(MySQL 8.0 - Docker / AWS RDS)]
+    subgraph VPC [AWS Cloud - VPC / Region: us-east-1]
+        ALB
+        subgraph Public_Subnets [Subredes Públicas]
+        end
+        subgraph Private_Subnets [Subredes Privadas]
+            EC2 <-->|MySQL Connection / puerto 3306| RDS[(4. AWS RDS Instance - MySQL 8.0)]
+        end
     end
 ```
 
@@ -31,83 +32,106 @@ graph TD
 
 ## 🛠️ Stack Tecnológico
 
-*   **Frontend**: Angular 19.2+, Angular Material, TypeScript, RxJS, Sass (SCSS).
+*   **Frontend**: Angular 19.2+, Angular Material, TypeScript, Signals & Computed reactivo, Sass (SCSS).
 *   **Backend**: Node.js, Express, TypeScript (Strict Mode), Sequelize v6, JSON Web Tokens (JWT), BcryptJS.
-*   **Base de Datos**: MySQL 8.0 (Dockerizado para desarrollo), AWS RDS (Preparado para producción).
-*   **Orquestación**: Docker, Docker Compose, Git.
+*   **Base de Datos**: AWS RDS (MySQL 8.0 - Producción), MySQL 8.0 (Dockerizado - Desarrollo).
+*   **Infraestructura de Nube & DevOps**:
+    *   **AWS EC2 (Elastic Compute Cloud)**: Cómputo flexible en nube (Ubuntu 24.04).
+    *   **AWS RDS (Relational Database Service)**: Alta disponibilidad y respaldos de base de datos relacional.
+    *   **AWS ALB (Application Load Balancer)**: Balanceo inteligente de peticiones HTTPS.
+    *   **Amazon S3 (Simple Storage Service)**: Alojamiento estático del frontend y almacenamiento manual de backups/assets.
+    *   **AMIs (Amazon Machine Images)**: Plantillas preconfiguradas del servidor para aprovisionamiento rápido y Auto Scaling.
+    *   **Docker & Docker Compose**: Empaquetado, portabilidad y orquestación de contenedores.
 
 ---
 
-## 📋 Prerrequisitos de Ejecución
+## 📋 Prerrequisitos de Ejecución Local
 
-Antes de iniciar la instalación, asegúrate de contar con las siguientes herramientas en tu sistema local:
-1. **Node.js**: Versión 18.x o superior (Recomendado LTS v20+).
-2. **npm**: Versión 9.x o superior (incluido con Node.js).
-3. **Docker Desktop**: Necesario para levantar el contenedor de la base de datos localmente.
-4. **Git**: Para control de versiones y clonación del repositorio.
+Antes de iniciar de manera local, asegúrate de contar con:
+1. **Node.js** v18+ o superior.
+2. **Docker Desktop** (para levantar MySQL de forma local si no deseas usar RDS en desarrollo).
 
 ---
 
-## 🚀 Guía Rápida de Orquestación e Instalación
+## 🚀 Guías de Ejecución por Entornos
 
-Sigue detalladamente estos **4 pasos** para tener todo el ecosistema funcionando en tu máquina en menos de 5 minutos:
+---
 
-### Paso 1: Clonar el Repositorio
-Abre tu terminal favorita y clona el proyecto:
+### Opción A: Entorno de Desarrollo (Local) 💻
+
+Sigue detalladamente estos pasos si deseas realizar modificaciones de código de forma local con base de datos en Docker:
+
+#### Paso 1: Clonar el Repositorio
 ```bash
 git clone https://github.com/juanbedoya1603/proyecto-prestamos-utp.git
 cd proyecto-prestamos-utp
 ```
 
-### Paso 2: Levantar la Base de Datos Local
-Asegúrate de que Docker Desktop está corriendo. Ejecuta el comando de orquestación en la raíz del proyecto para iniciar la base de datos MySQL en segundo plano:
+#### Paso 2: Levantar la Base de Datos Local
+Asegúrate de restaurar el bloque original de base de datos en tu `docker-compose.yml` local o ejecuta MySQL en tu puerto `3306`:
 ```bash
 docker-compose up -d
 ```
-> [!NOTE]
-> Esto levantará un contenedor MySQL en el puerto `3306` con la base de datos `prestamos_utp_db` y el usuario `root` con contraseña `root1234`.
 
-### Paso 3: Configurar e Instalar el Servidor (Backend)
-1. Navega al directorio del backend:
+#### Paso 3: Configurar e Instalar el Servidor (Backend)
+1. Entra a backend e instala dependencias:
    ```bash
    cd backend
-   ```
-2. Instala todas las dependencias requeridas (compilación e infraestructura):
-   ```bash
    npm install
    ```
-3. Configura el archivo de variables de entorno `.env`. Puedes duplicar la plantilla de ejemplo:
-   ```bash
-   cp .env.example .env
-   ```
-   *Verifica que las credenciales de base de datos coincidan con las de `docker-compose.yml` (para más detalles, lee el [README del Backend](file:///c:/Users/bedoy/OneDrive/Desktop/Programacion/Progra%20WEB/Proyecto%20Final%20Web/proyecto-prestamos-utp/backend/README.md)).*
-4. Levanta el servidor en modo desarrollo:
+2. Configura tu `.env` local (`DB_HOST=127.0.0.1` o `localhost`).
+3. Corre el servidor en desarrollo local (esto creará las tablas y ejecutará el seed automáticamente):
    ```bash
    npm run dev
    ```
-   > [!IMPORTANT]
-   > Al iniciar por primera vez, el servidor sincronizará automáticamente las tablas en MySQL y **ejecutará el seeder de base de datos**, poblando el inventario, categorías, roles, permisos y credenciales de prueba de forma automática.
 
-### Paso 4: Configurar e Instalar el Cliente (Frontend)
-1. Abre una nueva pestaña en tu terminal y navega al directorio del frontend:
+#### Paso 4: Configurar e Instalar el Cliente (Frontend)
+1. En otra terminal entra a front e instala dependencias:
    ```bash
    cd ../front
-   ```
-2. Instala los paquetes y dependencias del cliente (Angular, Material y RxJS):
-   ```bash
    npm install
    ```
-3. Inicia el servidor de desarrollo local de Angular:
+2. Inicia el servidor de desarrollo local de Angular:
    ```bash
    npm start
    ```
-4. Abre tu navegador e ingresa a: **`http://localhost:4200/`**
+3. Navega en tu navegador a: **`http://localhost:4200/`**
+
+---
+
+### Opción B: Entorno de Producción (AWS Cloud) ☁️
+
+Este es el flujo para compilar, dockerizar y desplegar actualizaciones directamente sobre la infraestructura real de producción en AWS:
+
+#### Paso 1: Empaquetar y Desplegar el Backend en AWS EC2
+1.  **Construir Imagen**: En la instancia EC2 o en el pipeline de CI/CD, construye la imagen a partir del `Dockerfile` (Node 18 Alpine):
+    ```bash
+    docker-compose build
+    ```
+2.  **Iniciar API**: Levanta el contenedor orquestado del backend en la instancia EC2. Este correrá en el puerto `3000` internamente:
+    ```bash
+    docker-compose up -d
+    ```
+3.  **Chequeo de Salud**: El balanceador ALB monitorea la salud del contenedor consumiendo automáticamente el endpoint `/health` expuesto en el puerto `3000`.
+
+#### Paso 2: Compilar y Desplegar el Frontend en AWS S3
+1.  **Endpoint del ALB**: Verifica que las URLs de conexión en los servicios de Angular (`auth.service.ts`, `equipment.service.ts`, `loan.service.ts`, `user.service.ts`) apunten al balanceador público de carga de AWS:
+    `http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com`
+2.  **Compilar Angular**: Genera el bundle optimizado para producción en tu máquina local o servidor de compilación:
+    ```bash
+    npm run build
+    ```
+3.  **Subir a S3**: Sube el contenido de la carpeta `/dist/front` al bucket de S3 utilizando la CLI de AWS:
+    ```bash
+    aws s3 sync dist/front s3://s3-prestamos-utp-front-prod --delete
+    ```
+4.  **Acceso Web**: El frontend estará disponible a nivel mundial a través del endpoint HTTP provisto por el Static Website Hosting del bucket de S3.
 
 ---
 
 ## 🔑 Credenciales de Prueba (Seeded Data)
 
-Para facilitar la evaluación de la rúbrica académica, la base de datos se precarga de forma automática con dos roles de prueba con diferentes permisos (RBAC):
+El sistema de base de datos AWS RDS se encuentra precargado con los siguientes roles y usuarios para la evaluación:
 
 | Rol | Correo Electrónico | Contraseña | Capacidades en el Sistema |
 | :--- | :--- | :--- | :--- |

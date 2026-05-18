@@ -70,6 +70,44 @@ El formulario de préstamo de equipos implementa una validación doble:
 
 ---
 
+## ☁️ Despliegue en Producción (AWS S3)
+
+Para el despliegue del Frontend en alta disponibilidad, hemos migrado el servidor local a la infraestructura de almacenamiento estático de Amazon Web Services:
+
+### 1. Compilación de Producción
+Se ejecuta el empaquetado del bundle altamente optimizado para web:
+```bash
+npm run build
+```
+Esto genera los artefactos minificados HTML, JS compilado y estilos optimizados dentro del directorio `/dist/front`.
+
+### 2. AWS S3 Static Website Hosting
+*   Los contenidos de `/dist/front` se cargaron a un bucket público de **Amazon S3** (`s3://s3-prestamos-utp-front-prod`).
+*   Se habilitó la opción **Static website hosting** configurando tanto el "Index document" como el "Error document" hacia `index.html`. Esto es crítico para soportar correctamente el enrutamiento del lado del cliente de Angular (HTML5 pushState) al refrescar el navegador.
+*   Se inyectó una **Bucket Policy** para permitir solicitudes de lectura pública:
+    ```json
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "PublicReadGetObject",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::s3-prestamos-utp-front-prod/*"
+        }
+      ]
+    }
+    ```
+
+### 3. Conexión de API al Application Load Balancer (ALB) 📡
+En el entorno de nube, las peticiones HTTP de los servicios Angular ya no apuntan a `localhost:3000`. Se configuraron dinámicamente en los archivos de servicio de Angular (`auth.service.ts`, `equipment.service.ts`, `loan.service.ts`, y `user.service.ts`) para apuntar al **DNS público de nuestro balanceador de carga de AWS**:
+
+*   **Endpoint Base de API en Producción**:  
+    `http://alb-prestamos-utp-56970636.us-east-1.elb.amazonaws.com`
+
+---
+
 ## 🚀 Comandos y Guía de Desarrollo
 
 Navega al directorio `front` y ejecuta:
@@ -79,11 +117,4 @@ Inicia el compilador en tiempo real con recarga automática:
 ```bash
 npm start
 ```
-*La aplicación estará accesible en: `http://localhost:4200/`*
-
-### Compilación para Producción (Build)
-Compila el proyecto con todas las optimizaciones de minificación, empaquetado de assets y depuración para producción:
-```bash
-npm run build
-```
-*Los archivos compilados resultantes se guardarán en la carpeta `dist/front`.*
+*La aplicación estará accesible localmente en: `http://localhost:4200/`*

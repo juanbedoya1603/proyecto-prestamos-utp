@@ -18,13 +18,14 @@ backend/
 │   ├── seeders/         # Datos semilla iniciales (Poblamiento de tablas maestro)
 │   ├── types/           # Interfaces y declaraciones de tipos custom de TypeScript
 │   └── app.ts           # Inicializador principal y montaje de middlewares de Express
+├── Dockerfile           # Receta de empaquetado Docker para producción (Node 18 Alpine)
 ├── tsconfig.json        # Configuración estricta del compilador de TS
 └── package.json         # Dependencias del servidor y scripts de desarrollo
 ```
 
 ---
 
-## ⚙️ Configuración de Variables de Entorno (`.env`)
+## ⚙️ Configuración de Variables de Env y Topología en Producción
 
 El servidor depende estrictamente de configuraciones externas inyectadas mediante variables de entorno para evitar prácticas inseguras de hardcoding. Duplica el archivo `.env.example` y edita las siguientes llaves en tu `.env` local:
 
@@ -32,9 +33,9 @@ El servidor depende estrictamente de configuraciones externas inyectadas mediant
 # Puerto del Servidor Express
 PORT=3000
 
-# Parámetros de Conexión MySQL (Dockerizado o Nube AWS RDS)
-DB_HOST=127.0.0.1
-DB_USER=root
+# Parámetros de Conexión MySQL (AWS RDS en Producción)
+DB_HOST=rds-prestamos-utp-prod.crgyoaqhkkp8.us-east-1.rds.amazonaws.com
+DB_USER=admin
 DB_PASSWORD=root1234
 DB_NAME=prestamos_utp_db
 DB_PORT=3306
@@ -42,6 +43,44 @@ DB_PORT=3306
 # Firmas de Seguridad Criptográfica JWT
 JWT_ACCESS_SECRET=clave_secreta_super_segura_de_acceso_utp
 JWT_REFRESH_SECRET=clave_secreta_super_segura_de_actualizacion_utp
+```
+
+> [!IMPORTANT]
+> En el entorno de producción en AWS:
+> *   **`DB_HOST`**: Apunta al endpoint DNS maestro de la instancia de base de datos administrada en **AWS RDS** (`rds-prestamos-utp-prod.crgyoaqhkkp8.us-east-1.rds.amazonaws.com`) en lugar de `localhost`.
+> *   **Protección del Puerto 3000 (EC2)**: El Security Group de nuestra máquina virtual **AWS EC2 (Ubuntu 24.04)** mantiene el puerto `3000` bloqueado al público de internet. Solo se permite tráfico entrante si proviene explícitamente del **AWS Application Load Balancer (ALB)** de red. Esto evita ataques directos al servidor API y permite que todo pase de forma centralizada y segura por el balanceador.
+
+---
+
+## 🐳 Dockerización y Orquestación en AWS EC2 (Producción)
+
+Para garantizar un entorno idéntico e inmune a discrepancias entre sistemas operativos de desarrollo y servidores de nube, el backend fue dockerizado:
+
+### 1. Receta del `Dockerfile` (Node 18 Alpine)
+El archivo empaqueta el servidor minimizando la huella del contenedor en disco y memoria:
+```dockerfile
+FROM node:18-alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+### 2. Orquestación en Nube via Docker Compose
+En la máquina virtual EC2, el despliegue y reinicios automáticos ante caídas se administran a través del servicio orquestado en `docker-compose.yml`:
+```yaml
+services:
+  api:
+    build: ./backend
+    container_name: prestamos_backend_api
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    restart: always
 ```
 
 ---
